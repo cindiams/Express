@@ -11,34 +11,55 @@ let clientes = [
     {id: 4, nome: 'Lucas Moraes da Silva', telefone: '998887733'},  
 ]
 
-app.get('/clientes', (request, response) => response.json(clientes))
+function log(request, response, next){
+    const{url, method} = request;
+    console.log(`${method} = ${url} at ${new Date()}`)
+    return next();
+}
+app.use(log)
+
+app.get('/clientes', (request, response) => response.status(200).json(clientes))
 
 app.get('/clientes/:nome', (request, response)=> {
-    const cliente = clientes.filter(value=> value.nome == request.params.nome);
-    response.json(cliente);
+    const {nome} = request.params;
+    const cliente = clientes.find(value=> value.nome == nome);
+    if (cliente == undefined){
+        response.status(400).json({error: "Requisição Inválida!"});
+    }else{
+        response.status(200).json(cliente);
+    }
+    
 })
 
 app.post('/clientes', (request, response)=>{
     const cliente = request.body;
    clientes.push(cliente);
-   response.json(cliente);
+   response.status(201).json(cliente);
 })
 
 app.put('/clientes/:id', (request, response) =>{
     const id = request.params.id;
     const nome = request.body.nome;
 
-    let cliente = clientes.filter(value => value.id == id);
-
-    cliente[0].nome = nome;
-
-    response.json(cliente[0]);
+    let cliente = clientes.find(value => value.id == id);
+    if (cliente == undefined){
+        response.status(400).send();
+    }else{
+        cliente.nome = nome;
+        response.status(200).json(cliente);
+    }
+   
 })
 
 app.delete('/clientes/:id', (request, response)=>{
     const id = request.params.id;
-    clientes = clientes.filter(value => value.id != id);
-    response.json(clientes)
+    const  index = clientes.findIndex(value => value.id == id);
+    if(index == -1){
+        response.status(400).send();
+    }else{
+        clientes.splice(index, 1);
+        response.status(204).send();
+    }
 })
 
 app.listen(3000);
